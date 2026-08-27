@@ -1,0 +1,226 @@
+-- Obtener el servicio de jugadores
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local coreGui = game:GetService("CoreGui")
+local SoundService = game:GetService("SoundService")
+
+-- Limpiar interfaz anterior
+if coreGui:FindFirstChild("TrollGui") then
+    coreGui.TrollGui:Destroy()
+end
+
+-- Limpiar sonidos viejos de ejecuciones anteriores
+for _, s in ipairs(SoundService:GetChildren()) do
+    if s.Name == "TrollChaosSound" or s.Name == "TrollIntroSound" or s.Name == "TrollFinalSound" then
+        s:Destroy()
+    end
+end
+
+-- VOLUMEN MAXIMO que permite Roblox
+local VOL = 10
+
+-- ScreenGui principal
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "TrollGui"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true -- cubre TODA la pantalla real (PC y celular)
+screenGui.Parent = coreGui
+
+-- Fondo de la interfaz
+local background = Instance.new("ImageLabel")
+background.Size = UDim2.new(0, 300, 0, 200)
+background.Position = UDim2.new(0.5, -150, 0.5, -100)
+background.BackgroundTransparency = 1
+background.Image = "rbxassetid://93021683834741"
+background.Parent = screenGui
+
+-- Botón
+local killButton = Instance.new("TextButton")
+killButton.Size = UDim2.new(0, 220, 0, 60)
+killButton.Position = UDim2.new(0.5, -110, 0.5, 0)
+killButton.Text = "si aprietas este boton nunca mas tendras que laburar"
+killButton.TextScaled = true
+killButton.TextWrapped = true
+killButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+killButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+killButton.Font = Enum.Font.FredokaOne
+killButton.Parent = background
+
+-- Pantalla blanca
+local whiteScreen = Instance.new("Frame")
+whiteScreen.Size = UDim2.new(1.04, 0, 1.04, 0)
+whiteScreen.Position = UDim2.new(-0.02, 0, -0.02, 0)
+whiteScreen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+whiteScreen.BorderSizePixel = 0
+whiteScreen.Visible = false
+whiteScreen.ZIndex = 50
+whiteScreen.Parent = screenGui
+
+-- ========== FONDO ARCOIRIS DEGRADADO GIRATORIO ==========
+local rainbowFondo = Instance.new("Frame")
+rainbowFondo.Size = UDim2.new(3, 0, 3, 0) -- mas grande que la pantalla para que al girar no se vean bordes
+rainbowFondo.Position = UDim2.new(-1, 0, -1, 0)
+rainbowFondo.BorderSizePixel = 0
+rainbowFondo.Visible = false
+rainbowFondo.ZIndex = 5
+rainbowFondo.Parent = screenGui
+
+local gradienteArcoiris = Instance.new("UIGradient")
+gradienteArcoiris.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),     -- rojo
+    ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255, 140, 0)),   -- naranja
+    ColorSequenceKeypoint.new(0.32, Color3.fromRGB(255, 230, 0)),   -- amarillo
+    ColorSequenceKeypoint.new(0.48, Color3.fromRGB(0, 220, 80)),    -- verde
+    ColorSequenceKeypoint.new(0.64, Color3.fromRGB(0, 200, 255)),   -- celeste
+    ColorSequenceKeypoint.new(0.80, Color3.fromRGB(60, 60, 255)),   -- azul
+    ColorSequenceKeypoint.new(1.00, Color3.fromRGB(200, 0, 255)),   -- violeta
+})
+gradienteArcoiris.Rotation = 45
+gradienteArcoiris.Parent = rainbowFondo
+
+-- Imagen final antes del kick
+local fullScreenImage = Instance.new("ImageLabel")
+fullScreenImage.Size = UDim2.new(1, 0, 1, 0)
+fullScreenImage.Position = UDim2.new(0, 0, 0, 0)
+fullScreenImage.BackgroundTransparency = 1
+fullScreenImage.Image = "rbxassetid://107658241344543"
+fullScreenImage.Visible = false
+fullScreenImage.ZIndex = 100
+fullScreenImage.Parent = screenGui
+
+-- Sonidos de la etapa de caos
+local soundIds = {
+    "rbxassetid://117909139728666",
+    "rbxassetid://1840254565",
+    "rbxassetid://132762282841552",
+    "rbxassetid://336771379",
+    "rbxassetid://120717906835357",
+    "rbxassetid://1300114549451469",
+    "rbxassetid://102865919016574",
+    "rbxassetid://6717888117",
+    "rbxassetid://7486914328",
+    "rbxassetid://133319559387398",
+}
+
+-- Sonido especial de la imagen final y del kick
+local SONIDO_FINAL = "rbxassetid://8484505509"
+
+-- Imágenes random que aparecen por todos lados
+local imagenesRandom = {
+    "rbxassetid://98343109585057",
+    "rbxassetid://137554799265658",
+    "rbxassetid://103864473687403",
+}
+
+-- Sonidos: van a SoundService, volumen MAXIMO, JAMAS se detienen
+local function reproducirSonido(id, nombre)
+    local sound = Instance.new("Sound")
+    sound.Name = nombre
+    sound.SoundId = id
+    sound.Looped = true
+    sound.Volume = VOL
+    sound.Parent = SoundService
+    sound:Play()
+    return sound
+end
+
+local imagenesVivas = {}
+
+-- Crea una IMAGEN RANDOM en posicion random de la pantalla
+local function crearImagen()
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+    local vp = cam.ViewportSize -- funciona igual en PC y celular
+
+    local w = math.random(90, 220)
+    local h = w
+
+    local posX = math.random(0, math.max(0, vp.X - w))
+    local posY = math.random(0, math.max(0, vp.Y - h))
+
+    local img = Instance.new("ImageLabel")
+    img.Size = UDim2.fromOffset(w, h)
+    img.Position = UDim2.fromOffset(posX, posY)
+    img.BackgroundTransparency = 1 -- solo la imagen, sin cajita
+    img.Image = imagenesRandom[math.random(1, #imagenesRandom)]
+    img.Rotation = math.random(-20, 20)
+    img.ZIndex = 10 + math.random(0, 20)
+    img.Parent = screenGui
+
+    table.insert(imagenesVivas, img)
+
+    task.delay(math.random(3, 9) / 10, function()
+        if img and img.Parent then
+            img:Destroy()
+        end
+    end)
+end
+
+local activado = false
+
+killButton.MouseButton1Click:Connect(function()
+    if activado then return end
+    activado = true
+
+    repeat task.wait() until workspace.CurrentCamera
+
+    -- ========== FASE 1: Blanco + audio (3 segundos) ==========
+    whiteScreen.Visible = true
+
+    local introSound = reproducirSonido("rbxassetid://135680040975059", "TrollIntroSound")
+    introSound.Looped = false
+
+    task.wait(3)
+
+    -- ========== FASE 2: ARCOIRIS GIRATORIO + SPAM DE IMAGENES (8 segundos) ==========
+    whiteScreen.Visible = false
+    rainbowFondo.Visible = true
+
+    -- Animacion del gradiente arcoiris: gira infinitamente en diagonal
+    local arcoirisActivo = true
+    task.spawn(function()
+        while arcoirisActivo do
+            gradienteArcoiris.Rotation = (os.clock() * 80) % 360 -- velocidad de giro
+            task.wait()
+        end
+    end)
+
+    -- Spam de TODOS los sonidos
+    for _, id in ipairs(soundIds) do
+        reproducirSonido(id, "TrollChaosSound")
+    end
+
+    -- Spawner AGRESIVO de imagenes
+    local spawnerActivo = true
+    task.spawn(function()
+        while spawnerActivo do
+            local vivas = 0
+            for _, v in ipairs(imagenesVivas) do
+                if v.Parent then vivas += 1 end
+            end
+            if vivas < 35 then
+                crearImagen()
+            end
+            task.wait(math.random(2, 6) / 100)
+        end
+    end)
+
+    task.wait(8)
+
+    arcoirisActivo = false
+    spawnerActivo = false
+    rainbowFondo.Visible = false
+    for _, v in ipairs(imagenesVivas) do
+        if v and v.Parent then v:Destroy() end
+    end
+    table.clear(imagenesVivas)
+
+    -- ========== FASE 3: Imagen fullscreen + su sonido (3 segundos) ==========
+    fullScreenImage.Visible = true
+    reproducirSonido(SONIDO_FINAL, "TrollFinalSound")
+
+    task.wait(3)
+
+    -- ========== FASE 4: KICK (los 12 sonidos siguen sonando) ==========
+    LocalPlayer:Kick("Segunda vez que caes en lo mismo vago de mierda, ve a laburar")
+end)
