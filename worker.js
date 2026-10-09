@@ -1,17 +1,18 @@
 export default {
   async fetch(request) {
-    const userAgent = (request.headers.get("user-agent") || "").toLowerCase();
+    const url = new URL(request.url);
 
-   
-    if (userAgent.includes("mozilla") || userAgent.includes("chrome") || userAgent.includes("safari") || userAgent.includes("edg")) {
-      return new Response("Just go home nigga, skidyyyyyyy theres nothing here either lol", {
+    // Si entran al enlace normal sin la ruta secreta, no muestra nada
+    if (url.pathname !== "/script") {
+      return new Response("Acceso no autorizado", {
+        status: 403,
         headers: { "content-type": "text/plain;charset=UTF-8" }
       });
     }
 
-    
-    const url = "https://raw.githubusercontent.com/iSacredRivals/LaburoHub/refs/heads/main/LaburoHubREWORKv2/67";
-    const response = await fetch(url);
+    // Solo si tiene "/script" al final entrega el archivo:
+    const githubUrl = "https://raw.githubusercontent.com/iSacredRivals/LaburoHub/refs/heads/main/LaburoHubREWORKv2/67";
+    const response = await fetch(githubUrl);
     const script = await response.text();
 
     return new Response(script, {
